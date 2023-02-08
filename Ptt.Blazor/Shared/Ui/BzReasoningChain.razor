@@ -1,0 +1,20 @@
+﻿@{
+    if (Chain is null) return;
+}
+
+<div class="d-flex gap-4">
+    <BzExpression Expression="@Chain.Beginning" />
+
+    @foreach (var part in Chain.Parts)
+    {
+        <div>
+            <BzRelationSymbol Symbol="@part.Symbol" />
+            <BzExpression Expression="@part.Expression" />
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public ReasoningChain Chain { get; set; } = null!;
+}

@@ -1,0 +1,21 @@
+﻿@{
+    if (Expression is null) return;
+}
+
+@if (Expression is AtomExpression ae)
+{
+    <span>@ae.Symbol</span>
+}
+else if (Expression is BinaryExpression be)
+{
+    <span><BzExpression Expression="@be.Lhs" /> <span>@be.Symbol</span> <BzExpression Expression="@be.Rhs" /></span>
+}
+else if (Expression is UnaryExpression ue)
+{
+    <span><span>@ue.Symbol</span> <BzExpression Expression="@ue.Op" /></span>
+}
+
+@code {
+    [Parameter]
+    public Expression? Expression { get; set; }
+}

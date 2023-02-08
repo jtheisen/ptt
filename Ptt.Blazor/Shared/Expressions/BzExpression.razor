@@ -1,0 +1,14 @@
+﻿@{
+    if (Expression is null) return;
+}
+
+<span class="@ClassNames("hovering".If(IsHovering))" @onmouseover:stopPropagation @onmouseover="() => IsHovering = true" @onmouseout="() => IsHovering = false">
+    <BzExpressionContent Expression="@Expression" />
+</span>
+
+@code {
+    [Parameter]
+    public Expression? Expression { get; set; }
+
+    public Boolean IsHovering { get; set; }
+}
