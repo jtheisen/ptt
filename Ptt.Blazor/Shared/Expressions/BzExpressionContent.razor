@@ -8,14 +8,27 @@
 }
 else if (Expression is BinaryExpression be)
 {
-    <span><BzExpression Expression="@be.Lhs" /> <span>@be.Symbol</span> <BzExpression Expression="@be.Rhs" /></span>
+    if (IsInner)
+    {
+        <text>(</text>
+    }
+    <BzExpression Expression="@be.Lhs" IsInner="true" />
+    <span>@be.Symbol</span>
+    <BzExpression Expression="@be.Rhs" IsInner="true" />
+    if (IsInner)
+    {
+        <text>)</text>
+    }
 }
 else if (Expression is UnaryExpression ue)
 {
-    <span><span>@ue.Symbol</span> <BzExpression Expression="@ue.Op" /></span>
+    <span><span>@ue.Symbol</span> <BzExpression Expression="@ue.Op" IsInner="true" /></span>
 }
 
 @code {
     [Parameter]
     public Expression? Expression { get; set; }
+
+    [Parameter]
+    public Boolean IsInner { get; set; }
 }

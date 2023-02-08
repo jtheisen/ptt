@@ -1,0 +1,35 @@
+﻿.reasoning-chain {
+  font-size: 2em;
+}
+
+.hovering > * {
+  color: red;
+}
+
+.hovering {
+  outline: 2px solid gray;
+  outline-offset: 0.25em;
+}
+
+.chooser-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4em;
+  height: 4em;
+}
+.chooser-wrapper > .chooser-box {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: white;
+  outline: 2px solid black;
+  padding: 0.25em 0.5em;
+}
+
+.expression {
+  cursor: pointer;
+}
+.expression > * {
+  user-select: none;
+}

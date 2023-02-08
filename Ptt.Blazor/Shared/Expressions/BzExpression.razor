@@ -2,13 +2,38 @@
     if (Expression is null) return;
 }
 
-<span class="@ClassNames("hovering".If(IsHovering))" @onmouseover:stopPropagation @onmouseover="() => IsHovering = true" @onmouseout="() => IsHovering = false">
-    <BzExpressionContent Expression="@Expression" />
+<span class="@ClassNames("expression", "position-relative", "hovering".If(IsHovering))"
+    @onmouseover:stopPropagation
+    @onmouseover="() => IsHovering = true"
+    @onmouseout="() => IsHovering = false"
+    @onclick:stopPropagation
+    @onclick="OpenChooser"
+>
+    <BzExpressionContent Expression="@Expression" IsInner="@IsInner" />
+
+    @if (IsChooserOpen)
+    {
+        <div class="chooser-wrapper">
+            <div class="chooser-box">
+                chooser
+            </div>
+        </div>
+    }
 </span>
 
 @code {
     [Parameter]
     public Expression? Expression { get; set; }
 
+    [Parameter]
+    public Boolean IsInner { get; set; }
+
     public Boolean IsHovering { get; set; }
+
+    public Boolean IsChooserOpen { get; set; }
+
+    public void OpenChooser()
+    {
+        IsChooserOpen = !IsChooserOpen;
+    }
 }
