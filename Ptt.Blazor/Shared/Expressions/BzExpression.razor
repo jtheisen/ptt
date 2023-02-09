@@ -1,39 +1,73 @@
-﻿@{
-    if (Expression is null) return;
+﻿@inherits LocalComponentBase
+
+@{
+    RenderFragment<RenderFragment> simple = c => @<span class="@Classes">@c</span>;
+
+    RenderFragment<RenderFragment> full = c =>
+            @<span
+                class="@Classes"
+                @onmouseover:stopPropagation
+                @onmouseover="() => IsHovering = true"
+                @onmouseout="() => IsHovering = false"
+                @onclick:stopPropagation
+                @onclick="OpenChooser"
+            >@c</span>
+    ;
+
+    RenderFragment<RenderFragment> GetWrapper()
+    {
+        if (Context is null || !Context.IsInteractive) return simple;
+
+        return full;
+    }
 }
 
-<span class="@ClassNames("expression", "position-relative", "hovering".If(IsHovering))"
-    @onmouseover:stopPropagation
-    @onmouseover="() => IsHovering = true"
-    @onmouseout="() => IsHovering = false"
-    @onclick:stopPropagation
-    @onclick="OpenChooser"
->
+<WrapperApplication Wrapper="@GetWrapper()">
     <BzExpressionContent Expression="@Expression" IsInner="@IsInner" />
 
     @if (IsChooserOpen)
     {
         <div class="chooser-wrapper">
             <div class="chooser-box">
-                chooser
+                <BzChooserBoxContent ChainParts="ChainParts" />
             </div>
         </div>
     }
-</span>
+</WrapperApplication>
 
 @code {
     [Parameter]
-    public Expression? Expression { get; set; }
+    public Expression Expression { get; set; } = null!;
+
+    [CascadingParameter]
+    public IExpressionContext? Context { get; set; }
 
     [Parameter]
     public Boolean IsInner { get; set; }
 
     public Boolean IsHovering { get; set; }
 
-    public Boolean IsChooserOpen { get; set; }
+    public Boolean IsChooserOpen => ChainParts is not null;
+
+    public ChainPart[]? ChainParts { get; set; }
+
+    String Classes => ClassNames("expression", "position-relative", "hovering".If(IsHovering));
 
     public void OpenChooser()
     {
-        IsChooserOpen = !IsChooserOpen;
+        if (Context is null) return;
+
+        Context.BeginDerivation(Expression, CloseChooser, out var suggestions);
+
+        NotifyOnEscape(CloseChooser);
+
+        ChainParts = suggestions;
+    }
+
+    void CloseChooser()
+    {
+        ChainParts = null;
+
+        StateHasChanged();
     }
 }

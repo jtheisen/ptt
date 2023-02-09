@@ -1,0 +1,16 @@
+﻿
+<CascadingValue Value="StaticExpressionContext.Instance">
+    <ul class="list-group">
+        @foreach (var part in ChainParts)
+        {
+            <li class="list-group-item">
+                <BzChainPart Part="part" />
+            </li>
+        }
+    </ul>
+</CascadingValue>
+
+@code {
+    [Parameter]
+    public ChainPart[] ChainParts { get; set; } = null!;
+}

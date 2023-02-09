@@ -1,0 +1,9 @@
+﻿<div class="d-flex gap-2">
+    <BzRelationSymbol Symbol="@Part.Symbol" />
+    <BzExpression Expression="@Part.Expression" />
+</div>
+
+@code {
+    [Parameter]
+    public ChainPart Part { get; set; }
+}

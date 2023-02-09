@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ptt", "Ptt\Ptt.csproj", "{F
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestSuite", "TestSuite\TestSuite.csproj", "{759CC61F-43E1-4E60-B474-7F2B1607BE5A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ptt.Blazor", "Ptt.Blazor\Ptt.Blazor.csproj", "{1CB5D889-CC0E-4A32-BD3C-952C77382FA0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ptt.Blazor", "Ptt.Blazor\Ptt.Blazor.csproj", "{1CB5D889-CC0E-4A32-BD3C-952C77382FA0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

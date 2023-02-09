@@ -79,7 +79,7 @@ public record BinaryExpression(Symbol Symbol, Expression Lhs, Expression Rhs) : 
 
 public record Relation(Symbol Symbol, Expression Lhs, Expression Rhs);
 
-public record Rule(Symbol[] AllQuantifiedSymbols, Symbol Symbol, Expression Lhs, Expression Rhs);
+public record Rule(String Name, Symbol[] AllQuantifiedSymbols, Symbol Symbol, Expression Lhs, Expression Rhs);
 
 public record ChainPart(Symbol Symbol, Expression Expression);
 

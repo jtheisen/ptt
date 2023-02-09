@@ -1,13 +1,16 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using Ptt.Blazor.Data;
+using Ptt.Blazor.Logic;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var serivces = builder.Services;
+
 // Add services to the container.
-builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
-builder.Services.AddSingleton<WeatherForecastService>();
+serivces.AddRazorPages();
+serivces.AddServerSideBlazor();
+serivces.AddSingleton<WeatherForecastService>();
+
+serivces.AddScoped<InteractionManager>();
 
 var app = builder.Build();
 

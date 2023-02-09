@@ -2,17 +2,16 @@
     if (Chain is null) return;
 }
 
-<div class="reasoning-chain d-flex gap-4">
-    <BzExpression Expression="@Chain.Beginning" />
+<CascadingValue Value="Chain">
+    <div class="reasoning-chain d-flex gap-2">
+        <BzExpression Expression="@Chain.Beginning" />
 
-    @foreach (var part in Chain.Parts)
-    {
-        <div>
-            <BzRelationSymbol Symbol="@part.Symbol" />
-            <BzExpression Expression="@part.Expression" />
-        </div>
-    }
-</div>
+        @foreach (var part in Chain.Parts)
+        {
+            <BzChainPart Part="part" />
+        }
+    </div>
+</CascadingValue>
 
 @code {
     [Parameter]

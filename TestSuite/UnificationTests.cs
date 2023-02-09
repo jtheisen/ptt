@@ -13,11 +13,11 @@ public class UnificationTests : TestsBase
     [TestMethod]
     public void TestRules()
     {
-        var rule = new Rule(new[] { ~x, ~y }, x * y, y * x);
+        var rule = new Rule("comm", new[] { ~x, ~y }, SymEq, x * y, y * x);
 
         AssertEqual(
             b * a,
-            rule.ApplyRule(a * b)!
+            rule.ApplyRule(a * b)!.Expression
             );
     }
 }

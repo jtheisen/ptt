@@ -1,0 +1,9 @@
+﻿@Wrapper(ChildContent)
+
+@code {
+    [Parameter]
+    public RenderFragment<RenderFragment> Wrapper { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+}

@@ -1,20 +1,54 @@
 ﻿namespace Ptt;
 
-public class ReasoningChain
+public interface IExpressionContext
+{
+    Boolean IsInteractive => false;
+
+    Boolean AllowsDerivation => false;
+
+    Boolean BeginDerivation(Expression source, Action close, out ChainPart[]? suggestions)
+    {
+        suggestions = null;
+
+        return false;
+    }
+}
+
+public class StaticExpressionContext : IExpressionContext
+{
+    public static IExpressionContext Instance { get; } = new StaticExpressionContext();
+}
+
+public class ReasoningChain : IExpressionContext
 {
     public Expression Beginning { get; init; } = null!;
 
     public List<ChainPart> Parts = new List<ChainPart>();
 
+    public RuleSet RuleSet { get; init; }
+
     public void Add(Symbol symbol, Expression expression)
     {
         Parts.Add(new ChainPart(symbol, expression));
+    }
+
+    Boolean IExpressionContext.IsInteractive => true;
+
+    Boolean IExpressionContext.AllowsDerivation => true;
+
+    Boolean IExpressionContext.BeginDerivation(Expression source, Action close, out ChainPart[]? suggestions)
+    {
+        suggestions = RuleSet.GetSuggestions(source).ToArray();
+
+        return true;
     }
 }
 
 public class RuleSet
 {
     List<Rule> rules = new List<Rule>();
+
+    public void AddRule(Rule rule) => rules.Add(rule);
 
     public IEnumerable<ChainPart> GetSuggestions(Expression expression)
     {
@@ -27,7 +61,6 @@ public class RuleSet
             yield return chainPart;
         }
     }
-
 }
 
 public class UiChainPart
