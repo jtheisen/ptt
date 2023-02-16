@@ -17,13 +17,18 @@ public class TestVariables
 
     public DslAtomExpression x, y, z, a, b, c, _0, _1;
 
-    public TestVariables()
+    public TestVariables(Func<String, String>? modifyName = null)
     {
         var bag = new SymbolBag();
 
         foreach (var field in typeof(TestVariables).GetFields())
         {
             var name = field.Name == "__" ? "__" : field.Name.TrimStart('_');
+
+            if (modifyName is not null)
+            {
+                name = modifyName(name);
+            }
 
             var expression = new AtomExpression(bag[name]);
 
@@ -35,11 +40,12 @@ public class TestVariables
 }
 #pragma warning restore
 
-public class Sample : TestVariables
+public class SampleRuleSet : TestVariables
 {
-    protected readonly RuleSet ruleSet;
+    public readonly RuleSet ruleSet;
 
-    public Sample()
+    public SampleRuleSet()
+        : base(s => s.ToUpper())
     {
         ruleSet = new RuleSet();
 

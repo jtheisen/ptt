@@ -115,6 +115,8 @@ public record Rule(String Name, Symbol[] AllQuantifiedSymbols, params Relation[]
 {
     public static Rule Implication(String name, Symbol[] allQuantifiedSymbols, Relation corollary, params Relation[] conditions)
         => new Rule(name, allQuantifiedSymbols, corollary.Singleton().Concat(conditions.Select(c => c with { IsNegated = !c.IsNegated })).ToArray());
+
+    public override String ToString() => String.Join(" ∨ ", from s in Summands select s);
 }
 
 public record ChainPart(Symbol Symbol, Expression Expression, Boolean IsReversed = false, Boolean IsNegated = false)
@@ -124,8 +126,8 @@ public record ChainPart(Symbol Symbol, Expression Expression, Boolean IsReversed
 
 public abstract class AbstractRuleSet
 {
-    public AbstractRuleSet GetReducedRules(Relation assumption)
-        => GetReducedRules(assumption);
+    public AbstractRuleSet Reduce(Relation assumption)
+        => new RuleSet(GetRules().Where(r => r.Summands.Length > 1).SelectMany(r => r.GetReducedRules(assumption)));
 
     public IEnumerable<Relation> GetSuggestionsAsRelations(Expression expression)
         => GetSuggestions(expression).Select(p => new Relation(p.Symbol, expression, p.Expression, p.IsReversed, p.IsNegated));
@@ -149,6 +151,11 @@ public abstract class AbstractRuleSet
     protected virtual IEnumerable<Rule> GetSimpleRules() => GetRules().Where(r => r.IsSimple());
 
     protected abstract IEnumerable<Rule> GetRules();
+
+    public override String ToString()
+    {
+        return String.Join("\n", GetRules());
+    }
 }
 
 public class RuleSet : AbstractRuleSet
@@ -197,6 +204,9 @@ public static class Extensions
     public static String Format(this IEnumerable<ChainPart> parts)
         => String.Join("\n", parts);
 
+    public static Relation Substitute(this Relation relation, IImmutableDictionary<Symbol, Expression?> substitutions)
+        => relation with { Lhs = relation.Lhs.Substitute(substitutions), Rhs = relation.Rhs.Substitute(substitutions) };
+
     public static Expression Substitute(this Expression expression, IImmutableDictionary<Symbol, Expression?> substitutions)
     {
         if (expression is AtomExpression a && substitutions.TryGetValue(a.Symbol, out var substitution) && substitution is not null)
@@ -225,16 +235,16 @@ public static class Extensions
 
     public static IEnumerable<Rule> GetReducedRules(this Rule rule, Relation assumption)
     {
-        foreach (var s in rule.Summands)
+        foreach (var summand in rule.Summands)
         {
             var substitutions = rule.AllQuantifiedSymbols.GetSubstitutionDictionary();
 
-            if (!s.TryUnify(assumption, out var result, ref substitutions)) continue;
+            if (!summand.TryUnify(assumption, true, out var result, ref substitutions)) continue;
 
             yield return new Rule(
                 rule.Name,
                 rule.AllQuantifiedSymbols.WithoutSubstitutions(substitutions).ToArray(),
-                rule.Summands.Where(s2 => s2 != s).ToArray()
+                (from s in rule.Summands where !Object.ReferenceEquals(s, summand) select s.Substitute(substitutions)).ToArray()
             );
         }
     }
@@ -249,7 +259,7 @@ public static class Extensions
         => symbols.ToImmutableDictionary(s => s, s => (Expression?)null);
 
     public static IEnumerable<Symbol> WithoutSubstitutions(this IEnumerable<Symbol> symbols, IImmutableDictionary<Symbol, Expression?> substitutions)
-        => from s in symbols where !substitutions.ContainsKey(s) select s;
+        => from s in symbols where substitutions[s] is null select s;
 
     public static Boolean TryApplyRule(this Rule rule, Expression expression, [NotNullWhen(true)] out ChainPart? result, Boolean forward = true)
     {
@@ -271,7 +281,7 @@ public static class Extensions
         return true;
     }
 
-    public static Boolean TryUnify(this Relation template, Relation source, [NotNullWhen(true)] out Relation? result, ref IImmutableDictionary<Symbol, Expression?> substitutions)
+    public static Boolean TryUnify(this Relation template, Relation source, Boolean negated, [NotNullWhen(true)] out Relation? result, ref IImmutableDictionary<Symbol, Expression?> substitutions)
     {
         result = null;
 
@@ -280,21 +290,21 @@ public static class Extensions
         var (symbol, tl, tr, tIsReversed, tIsNegated) = template;
         var (_, sl, sr, sIsReversed, sIsNegated) = source;
 
-        if (tIsNegated != sIsNegated) return false;
+        if ((tIsNegated != sIsNegated) != negated) return false;
 
         if (tIsReversed != sIsReversed) return false;
 
         if (!tl.TryUnify(sl, out var lhs, ref substitutions)) return false;
         if (!tr.TryUnify(sr, out var rhs, ref substitutions)) return false;
 
-        result = new Relation(symbol, rhs, rhs, tIsReversed, tIsNegated);
+        result = new Relation(symbol, lhs, rhs, tIsReversed, tIsNegated);
 
         return true;
     }
 
     public static Boolean TryUnify(this Expression template, Expression expression, [NotNullWhen(true)] out Expression? result, ref IImmutableDictionary<Symbol, Expression?> substitutions, IImmutableDictionary<Symbol, Symbol> symbolMapping = null)
     {
-        result = Unify(expression, template, ref substitutions, symbolMapping);
+        result = Unify(template, expression, ref substitutions, symbolMapping);
 
         return result is not null;
     }
