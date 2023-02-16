@@ -1,6 +1,10 @@
-﻿@page "/"
+﻿@inject InteractionManager InteractionManager
+
+@page "/"
 
 <PageTitle>Index</PageTitle>
+
+<div style="height: 10em">&nbsp;</div>
 
 <BzReasoningChain Chain="@Chain" />
 
@@ -10,5 +14,9 @@
     protected override void OnInitialized()
     {
         Chain = new Samples.Sample().GetChain();
+
+        Chain.ReasoningState = InteractionManager.ReasoningState;
+
+        Chain.Beginning.UiIfy(null);
     }
 }

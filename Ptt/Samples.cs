@@ -13,7 +13,9 @@ public class SymbolBag
 #pragma warning disable CS8618
 public class TestVariables
 {
-    public AtomExpression x, y, z, a, b, c, _0, _1;
+    public DslAtomExpression __;
+
+    public DslAtomExpression x, y, z, a, b, c, _0, _1;
 
     public TestVariables()
     {
@@ -21,7 +23,13 @@ public class TestVariables
 
         foreach (var field in typeof(TestVariables).GetFields())
         {
-            field.SetValue(this, new AtomExpression(bag[field.Name.TrimStart('_')]));
+            var name = field.Name == "__" ? "__" : field.Name.TrimStart('_');
+
+            var expression = new AtomExpression(bag[name]);
+
+            var dslExpression = new DslAtomExpression(expression);
+
+            field.SetValue(this, dslExpression);
         }
     }
 }
@@ -29,29 +37,39 @@ public class TestVariables
 
 public class Sample : TestVariables
 {
+    protected readonly RuleSet ruleSet;
+
+    public Sample()
+    {
+        ruleSet = new RuleSet();
+
+        ruleSet.AddImplication("neutral", new[] { ~x }, x * _1 == x);
+        ruleSet.AddImplication("neutral", new[] { ~x }, _1 * x == x);
+        ruleSet.AddImplication("neutral", new[] { ~x }, x + _0 == x);
+        ruleSet.AddImplication("neutral", new[] { ~x }, _0 + x == x);
+        ruleSet.AddImplication("inverse", new[] { ~x }, x + -x == _0);
+        ruleSet.AddImplication("inverse", new[] { ~x }, -x + x == _0);
+
+        ruleSet.AddImplication("commutativity", new[] { ~x, ~y }, x * y == y * x);
+        ruleSet.AddImplication("associativity", new[] { ~x, ~y, ~z }, (x * y) * z == x * (y * z));
+        ruleSet.AddImplication("commutativity", new[] { ~x, ~y }, x + y == y + x);
+        ruleSet.AddImplication("associativity", new[] { ~x, ~y, ~z }, (x + y) + z == x * (y + z));
+        ruleSet.AddImplication("distributivity", new[] { ~x, ~y, ~c }, (x + y) * c == x * c + y * c);
+        ruleSet.AddImplication("distributivity", new[] { ~x, ~y, ~c }, c * (x + y) == c * x + c * y);
+
+        ruleSet.AddImplication("equality", new[] { ~x, ~y, ~c }, x * c == y * c, x == y);
+        ruleSet.AddImplication("equality", new[] { ~x, ~y, ~c }, c * x == c * y, x == y);
+        ruleSet.AddImplication("equality", new[] { ~x, ~y, ~c }, x + c == y + c, x == y);
+        ruleSet.AddImplication("equality", new[] { ~x, ~y, ~c }, c + x == c + y, x == y);
+    }
+
     public ReasoningChain GetChain()
     {
-        var ruleSet = new RuleSet();
-
-        ruleSet.AddRule(new Rule("neutral", new[] { ~x }, SymEq, x * _1, x));
-        ruleSet.AddRule(new Rule("neutral", new[] { ~x }, SymEq, _1 * x, x));
-
-        ruleSet.AddRule(new Rule("neutral", new[] { ~x }, SymEq, x + _0, x));
-        ruleSet.AddRule(new Rule("neutral", new[] { ~x }, SymEq, _0 + x, x));
-
-        ruleSet.AddRule(new Rule("commutativity", new[] { ~x, ~y }, SymEq, x * y, y * x));
-        ruleSet.AddRule(new Rule("associativity", new[] { ~x, ~y, ~z }, SymEq, (x * y) * z, x * (y * z)));
-
-        ruleSet.AddRule(new Rule("commutativity", new[] { ~x, ~y }, SymEq, x + y, y + x));
-        ruleSet.AddRule(new Rule("associativity", new[] { ~x, ~y, ~z }, SymEq, (x + y) + z, x * (y + z)));
-
-        ruleSet.AddRule(new Rule("distributivity", new[] { ~x, ~y, ~z }, SymEq, (x + y) * c, x * c + y * c));
-        ruleSet.AddRule(new Rule("distributivity", new[] { ~x, ~y, ~z }, SymEq, c * (x + y), c * x + c * y));
-
-        var chain = new ReasoningChain { RuleSet = ruleSet, Beginning = x * y * z };
-
-        chain.Add(SymLt, x * (y * z));
+        var chain = new ReasoningChain { RuleSet = ruleSet, Beginning = a * (x + y) };
 
         return chain;
     }
+
+    protected void AssertEqual(Expression expected, Expression? actual)
+        => ExpressionComparer.AssertEqual(expected, actual);
 }

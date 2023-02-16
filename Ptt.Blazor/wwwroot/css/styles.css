@@ -11,25 +11,51 @@
   outline-offset: 0.25em;
 }
 
-.chooser-wrapper {
+.annotation {
   position: absolute;
-  top: 50%;
   left: 50%;
-  width: 4em;
-  height: 4em;
+  width: 0;
+  height: 0;
+  outline: 5px solid red;
+  /* temporarily for the chooser-box */
 }
-.chooser-wrapper > .chooser-box {
-  position: absolute;
+.annotation.annotation-top {
+  top: 0;
+}
+.annotation.annotation-top > .annotation-box {
   bottom: 0;
+  border-bottom: 1px solid black;
+}
+.annotation.annotation-bottom {
+  bottom: 0;
+}
+.annotation.annotation-bottom > .annotation-box {
+  top: 0;
+  border-top: 1px solid black;
+}
+.annotation.annotation-right {
+  top: 50%;
+  left: unset;
   right: 0;
+}
+.annotation.annotation-right > .chooser-box {
+  position: absolute;
+  left: 1em;
+  transform: none;
   background: white;
-  outline: 2px solid black;
-  padding: 0.25em 0.5em;
+  width: 10em;
+}
+.annotation > .annotation-box {
+  position: absolute;
+  transform: translateX(-50%);
+  background: white;
 }
 
-.expression {
+.expression-context {
   cursor: pointer;
 }
-.expression > * {
+.expression-context * {
+  display: flex;
+  flex-wrap: nowrap;
   user-select: none;
 }

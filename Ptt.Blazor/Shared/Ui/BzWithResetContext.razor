@@ -1,0 +1,10 @@
+﻿<CascadingValue Value="StaticExpressionContext.Instance">
+    <div @onclick:stopPropagation @onmouseover:stopPropagation>
+        @ChildContent
+    </div>
+</CascadingValue>
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

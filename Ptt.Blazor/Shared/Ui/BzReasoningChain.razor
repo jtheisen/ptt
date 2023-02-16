@@ -1,9 +1,11 @@
-﻿@{
+﻿@inherits LocalComponentBase
+
+@{
     if (Chain is null) return;
 }
 
 <CascadingValue Value="Chain">
-    <div class="reasoning-chain d-flex gap-2">
+    <div class="reasoning-chain expression-context d-flex gap-2">
         <BzExpression Expression="@Chain.Beginning" />
 
         @foreach (var part in Chain.Parts)
@@ -16,4 +18,6 @@
 @code {
     [Parameter]
     public ReasoningChain Chain { get; set; } = null!;
+
+    protected override void OnParametersSet() => SetUpdateSubscription(Chain);
 }

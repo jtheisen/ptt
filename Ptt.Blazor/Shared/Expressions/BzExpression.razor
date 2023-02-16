@@ -25,11 +25,22 @@
 <WrapperApplication Wrapper="@GetWrapper()">
     <BzExpressionContent Expression="@Expression" IsInner="@IsInner" />
 
-    @if (IsChooserOpen)
+    @if (Context?.AllowsDerivation == true && UiExpression?.Annotation is UiAnnotation annotation)
     {
-        <div class="chooser-wrapper">
+        <div class="@GetAnnotationClasses(annotation.IsTopOrLeft)">
+            <div class="annotation-box">
+                <BzWithResetContext>
+                    <BzChainPart Part="annotation.ChainPart" />
+                </BzWithResetContext>
+            </div>
+        </div>
+        
+    }
+    else if (IsChooserOpen)
+    {
+        <div class="@GetAnnotationClasses(null)">
             <div class="chooser-box">
-                <BzChooserBoxContent ChainParts="ChainParts" />
+                <BzChooserBoxContent ChainParts="ChainParts" OnSelected="HandleChoice" />
             </div>
         </div>
     }
@@ -45,11 +56,20 @@
     [Parameter]
     public Boolean IsInner { get; set; }
 
+    public UiExpression? UiExpression => Expression.Ui as UiExpression;
+
     public Boolean IsHovering { get; set; }
 
     public Boolean IsChooserOpen => ChainParts is not null;
 
     public ChainPart[]? ChainParts { get; set; }
+
+    String GetAnnotationClasses(Boolean? isTopOrLeft) => ClassNames(
+        "annotation",
+        "annotation-top".If(isTopOrLeft == true),
+        "annotation-bottom".If(isTopOrLeft == false),
+        "annotation-right".If(isTopOrLeft is null)
+    );
 
     String Classes => ClassNames("expression", "position-relative", "hovering".If(IsHovering));
 
@@ -59,8 +79,6 @@
 
         Context.BeginDerivation(Expression, CloseChooser, out var suggestions);
 
-        NotifyOnEscape(CloseChooser);
-
         ChainParts = suggestions;
     }
 
@@ -69,5 +87,14 @@
         ChainParts = null;
 
         StateHasChanged();
+    }
+
+    void HandleChoice(ChainPart choice)
+    {
+        Context?.SetAnnotation(UiExpression!, choice);
+
+        SetUpdateSubscription(UiExpression);
+
+        CloseChooser();
     }
 }

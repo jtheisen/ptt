@@ -12,31 +12,59 @@
     outline-offset: .25em;
 }
 
-.chooser-wrapper {
+.annotation {
     position: absolute;
-    top: 50%;
     left: 50%;
+    width: 0;
+    height: 0;
+    outline: 5px solid red;
 
-    width: 4em;
-    height: 4em;
+    &.annotation-top {
+        top: 0;
 
-    & > .chooser-box {
+        & > .annotation-box {
+            bottom: 0;
+            border-bottom: 1px solid black;
+        }
+    }
 
-        position: absolute;
+    &.annotation-bottom {
         bottom: 0;
+
+        & > .annotation-box {
+            top: 0;
+            border-top: 1px solid black;
+        }
+    }
+    /* temporarily for the chooser-box */
+    &.annotation-right {
+        top: 50%;
+        left: unset;
         right: 0;
 
-        background: white;
-        outline: 2px solid black;
+        & > .chooser-box {
+            position: absolute;
+            left: 1em;
+            transform: none;
+            background: white;
+            width: 10em;
+        }
+    }
 
-        padding: .25em .5em;
+    & > .annotation-box {
+        position: absolute;
+        transform: translateX(-50%);
+        background: white;
     }
 }
 
-.expression {
+.expression-context {
     cursor: pointer;
 
-    & > * {
+    & * {
+        display: flex;
+        flex-wrap: nowrap;
+
         user-select: none;
     }
 }

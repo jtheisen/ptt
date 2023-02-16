@@ -1,18 +1,32 @@
-﻿using Microsoft.JSInterop;
+﻿using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using System.Diagnostics;
 using System.Reactive;
 using System.Reactive.Subjects;
 
 namespace Ptt.Blazor.Logic;
 
-public class InteractionManager : IDisposable
+public record InteractionEvent;
+
+public record EscapeInteractionEvent : InteractionEvent;
+public record SpaceInteractionEvent : InteractionEvent;
+
+public class InteractionManager : IDisposable, IComponentNotifier
 {
     private readonly DotNetObjectReference<InteractionManager> self;
     private readonly IJSRuntime js;
     private Boolean isInstalled;
 
+    private Dictionary<Object, Subject<Unit>> listeners;
+
+    UiReasoningState reasoningState;
+
+    public UiReasoningState ReasoningState => reasoningState;
+
     public InteractionManager(IJSRuntime js)
 	{
+        this.reasoningState = new UiReasoningState(this);
+        this.listeners = new Dictionary<Object, Subject<Unit>>();
         this.self = DotNetObjectReference.Create(this);
         this.js = js;
     }
@@ -27,8 +41,18 @@ public class InteractionManager : IDisposable
         }
     }
 
-    Subject<Unit> onEscape = new Subject<Unit>();
-    public IObservable<Unit> OnEscape => onEscape;
+    Subject<InteractionEvent> onInteraction = new Subject<InteractionEvent>();
+    public IObservable<InteractionEvent> OnInteraction => onInteraction;
+
+    public IObservable<Unit> GetExpressionObservable(Object target)
+    {
+        if (!listeners.TryGetValue(target, out var subject))
+        {
+            listeners[target] = subject = new Subject<Unit>();
+        }
+
+        return subject;
+    }
 
     async Task Install()
     {
@@ -36,10 +60,21 @@ public class InteractionManager : IDisposable
     }
 
     [JSInvokable]
-    public void HandleEscape() => onEscape.OnNext(default);
+    public void HandleEscape() => reasoningState.HandleEscape();
+
+    [JSInvokable]
+    public void HandleSpace() => reasoningState.HandleSpace();
 
     public void Dispose()
     {
         self?.Dispose();
+    }
+
+    public void Notify(Object target)
+    {
+        if (listeners.TryGetValue(target, out var subject))
+        {
+            subject.OnNext(default);
+        }
     }
 }

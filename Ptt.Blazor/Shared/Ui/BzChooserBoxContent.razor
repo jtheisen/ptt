@@ -1,16 +1,21 @@
 ﻿
 <CascadingValue Value="StaticExpressionContext.Instance">
-    <ul class="list-group">
-        @foreach (var part in ChainParts)
-        {
-            <li class="list-group-item">
-                <BzChainPart Part="part" />
-            </li>
-        }
-    </ul>
+    <div @onclick:stopPropagation @onmouseover:stopPropagation>
+        <ul class="list-group">
+            @foreach (var part in ChainParts)
+            {
+                <li class="list-group-item list-group-item-action" @onclick="() => OnSelected?.Invoke(part)">
+                    <BzChainPart Part="part" />
+                </li>
+            }
+        </ul>
+    </div>
 </CascadingValue>
 
 @code {
     [Parameter]
     public ChainPart[] ChainParts { get; set; } = null!;
+
+    [Parameter]
+    public Action<ChainPart>? OnSelected { get; set; }
 }
