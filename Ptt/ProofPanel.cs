@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Ptt;
 
@@ -100,9 +101,114 @@ public interface IComponentNotifier
     void Notify(Object expression);
 }
 
+public class LiveExpression
+{
+    List<LiveExpression> flattened;
+    Expression expression;
+    Int32 selfI;
+    Int32 parentI;
+    List<Int32> childrenIs;
+
+    public LiveExpression(
+        List<LiveExpression> flattened, Expression expression, Int32 selfI, Int32 parentI, List<Int32> childrenIs
+    )
+    {
+        this.flattened = flattened;
+        this.expression = expression;
+        this.selfI = selfI;
+        this.parentI = parentI;
+        this.childrenIs = childrenIs;
+    }
+
+    public Int32 SelfI => selfI;
+    public Int32 ParentI => parentI;
+    public Expression Expression => expression;
+    public Boolean IsRoot => parentI < 0;
+    public LiveExpression Parent => parentI < 0 ? throw new Exception("Root has no parent") : flattened[parentI];
+}
+
+public class LiveExpressionRoot
+{
+    List<LiveExpression> flattened = new List<LiveExpression>();
+
+    public LiveExpressionRoot(Expression expression)
+    {
+        Flatten(expression, -1);
+    }
+
+    public Int32 Count => flattened.Count;
+
+    Int32 Flatten(Expression expression, Int32 parentI)
+    {
+        var selfI = flattened.Count;
+
+        var childrenIs = new List<Int32>();
+
+        var eih = new LiveExpression(flattened, expression, selfI, parentI, childrenIs);
+
+        flattened.Add(eih);
+
+        foreach (var child in expression.Children)
+        {
+            childrenIs.Add(Flatten(child, selfI));
+        }
+
+        return selfI;
+    }
+}
+
+public class ReasoningStateStack
+{
+    public record State(AbstractRuleSet Rules);
+
+    LiveExpressionRoot root;
+    Stack<State> stack = new Stack<State>();
+    ChainPart?[] annotations;
+
+    public ReasoningStateStack(Expression expression, RuleSet ruleSet)
+    {
+        root = new LiveExpressionRoot(expression);
+
+        annotations = new ChainPart?[root.Count];
+
+        stack.Push(new State(ruleSet));
+    }
+
+    public Boolean TryGetAnnotation(LiveExpression expression, [NotNullWhen(true)] out ChainPart? relation)
+    {
+        relation = null;
+
+        relation = annotations[expression.SelfI];
+
+        return relation is not null;
+    }
+
+    public void PushAnnotation(LiveExpression expression, ChainPart choice)
+    {
+        var rules = stack.Peek().Rules;
+
+        annotations[expression.SelfI] = choice;
+
+        var relation = choice.ToRelation(expression.Expression);
+
+
+
+        stack.Push(new State(rules.Reduce(relation), annotations.Concat(relation.Singleton())));
+    }
+
+    public void Undo()
+    {
+        stack.Pop();
+    }
+}
+
 public class UiReasoningState
 {
     private readonly IComponentNotifier notifier;
+
+    public record State(AbstractRuleSet Rules, IEnumerable<Relation> Annotations);
+
+    Stack<AbstractRuleSet> rules = new Stack<AbstractRuleSet>();
 
     ReasoningChain? chain;
 
@@ -146,7 +252,18 @@ public class UiReasoningState
     {
         if (!CanSetAnnotation(expression)) return;
 
-        this.chain = chain;
+        if (this.chain is null)
+        {
+            this.chain = chain;
+
+            rules.Push(chain.RuleSet);
+        }
+        else if (this.chain != chain)
+        {
+            throw new Exception($"Invalid chain");
+        }
+
+        rules.Push(rules.Peek().Reduce(choice.ToRelation(expression.Expression)));
 
         expression.Annotation = new UiAnnotation(expression.IsFirstOrOnly, choice);
 

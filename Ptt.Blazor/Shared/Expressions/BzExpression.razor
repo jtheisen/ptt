@@ -77,7 +77,9 @@
     {
         if (Context is null) return;
 
-        Context.BeginDerivation(Expression, CloseChooser, out var suggestions);
+        if (UiExpression is null) return;
+
+        Context.BeginDerivation(UiExpression, CloseChooser, out var suggestions);
 
         ChainParts = suggestions;
     }
