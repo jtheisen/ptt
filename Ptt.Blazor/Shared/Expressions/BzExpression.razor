@@ -10,8 +10,8 @@
             @<span
                 class="@Classes"
                 @onmouseover:stopPropagation
-                @onmouseover="() => IsHovering = true"
-                @onmouseout="() => IsHovering = false"
+                @onmouseover="SetHover"
+                @onmouseout="ClearHover"
                 @onclick:stopPropagation
                 @onclick="OpenChooser"
             >@c</span>
@@ -74,11 +74,20 @@
 
     String Classes => ClassNames("expression", "position-relative", "hovering".If(IsHovering));
 
-    public void OpenChooser()
+    void SetHover()
+    {
+        if (!State.CanSetAnnotation(UiExpression, out _)) return;
+
+        IsHovering = true;
+    }
+
+    void ClearHover() => IsHovering = false;
+
+    void OpenChooser()
     {
         if (UiExpression is null) return;
 
-        State.BeginDerivation(UiExpression, CloseChooser, out var suggestions);
+        if (!State.BeginDerivation(UiExpression, CloseChooser, out var suggestions)) return;
 
         ChainParts = suggestions;
     }

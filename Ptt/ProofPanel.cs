@@ -29,7 +29,9 @@ public class UiChainPart
 
 public class UiExpression
 {
-    public ReasoningChain Chain { get; init; }
+    public ReasoningChain Chain { get; init; } = null!;
+
+    public UiExpression Root { get; set; } = null!;
 
     public UiExpression? Parent { get; init; }
 
@@ -78,24 +80,34 @@ public class UiReasoningState
         this.closeChooser = closeChooser;
     }
 
-    public Boolean CanSetAnnotation(UiExpression expression)
+    public Boolean CanSetAnnotation(UiExpression? expression, out Boolean isParentAnnotation)
     {
-        if (lhs is null && rhs is null) return true;
+        isParentAnnotation = false;
 
-        if (lhs is not null && rhs is not null) return false;
+        if (expression is null) return false;
+
+        if (lhs is null && rhs is null) return true;
 
         var existing = (lhs ?? rhs)!;
 
+        if (existing.Root != expression.Root) return false;
+
         if (existing == expression) return false;
 
-        if (existing.Parent != expression.Parent) return false;
+        isParentAnnotation = existing.Parent == expression;
 
-        return true;
+        if (isParentAnnotation) return true;
+
+        if (lhs is not null && rhs is not null) return false;
+
+        if (existing.Parent == expression.Parent) return true;
+
+        return false;
     }
 
     public void SetAnnotation(UiExpression expression, ChainPart choice)
     {
-        if (!CanSetAnnotation(expression)) return;
+        if (!CanSetAnnotation(expression, out var isParentAnnotation)) return;
 
         choice.Expression.AssertNonUi();
 
@@ -112,6 +124,12 @@ public class UiReasoningState
 
         expression.Annotation = new UiAnnotation(expression.IsFirstOrOnly, choice);
 
+        if (isParentAnnotation)
+        {
+            Reset(ref rhs);
+            Reset(ref lhs);
+        }
+
         if (expression.IsFirstOrOnly)
         {
             lhs = expression;
@@ -125,6 +143,8 @@ public class UiReasoningState
     public Boolean BeginDerivation(UiExpression source, Action close, out ChainPart[]? suggestions)
     {
         suggestions = null;
+
+        if (!CanSetAnnotation(source, out _)) return false;
 
         var subExpressions = source.Expression.Children.Select(c => c.Ui).OfType<UiExpression>().ToArray();
 
@@ -238,19 +258,21 @@ public static class UiExpressions
         }
 
         var clone = expression.MakeClone();
-        clone.UiIfyInSitu(chain, null);
+        clone.UiIfyInSitu(chain, null, null);
         return (UiExpression)clone.Ui!;
     }
 
-    public static void UiIfyInSitu(this Expression expression, ReasoningChain chain, UiExpression? parent/*, RuleSet ruleSet*/)
+    public static void UiIfyInSitu(this Expression expression, ReasoningChain chain, UiExpression? root, UiExpression? parent/*, RuleSet ruleSet*/)
     {
         var result = new UiExpression { Expression = expression, Chain = chain, Parent = parent/*, RuleSet = ruleSet*/ };
+
+        result.Root = root ?? result;
 
         expression.Ui = result;
 
         foreach (var child in expression.Children)
         {
-            UiIfyInSitu(child, chain, result/*, ruleSet*/);
+            UiIfyInSitu(child, chain, result.Root, result/*, ruleSet*/);
         }
     }
 }
