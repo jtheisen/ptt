@@ -31,16 +31,20 @@
     @if (UiExpression?.Annotation is UiAnnotation annotation)
     {
         <div class="@GetAnnotationClasses(annotation.IsTopOrLeft)">
-            <div class="annotation-box">
-                <BzChainPart Part="annotation.ChainPart" />
+            <div>
+                <div class="annotation-box">
+                    <BzChainPart Part="annotation.ChainPart" />
+                </div>
             </div>
         </div>
     }
     else if (IsChooserOpen)
     {
         <div class="@GetAnnotationClasses(null)">
-            <div class="chooser-box">
-                <BzChooserBoxContent ChainParts="ChainParts" OnSelected="HandleChoice" />
+            <div>
+                <div class="chooser-box">
+                    <BzChooserBoxContent ChainParts="ChainParts" OnSelected="HandleChoice" />
+                </div>
             </div>
         </div>
     }
@@ -72,7 +76,11 @@
         "annotation-right".If(isTopOrLeft is null)
     );
 
-    String Classes => ClassNames("expression", "position-relative", "hovering".If(IsHovering));
+    String Classes => ClassNames(
+        "expression",
+        "position-relative",
+        "hovering".If(IsHovering)
+    );
 
     void SetHover()
     {
