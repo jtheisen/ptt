@@ -71,7 +71,7 @@ public class SampleRuleSet : TestVariables
 
     public ReasoningChain GetChain()
     {
-        var chain = new ReasoningChain { RuleSet = ruleSet, Beginning = a * (x + y) };
+        var chain = new ReasoningChain(ruleSet, a * (x + y));
 
         return chain;
     }

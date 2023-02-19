@@ -14,9 +14,5 @@
     protected override void OnInitialized()
     {
         Chain = new Samples.SampleRuleSet().GetChain();
-
-        Chain.ReasoningState = InteractionManager.ReasoningState;
-
-        Chain.Beginning.UiIfy(null);
     }
 }

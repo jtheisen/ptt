@@ -1,4 +1,7 @@
-﻿@inherits LocalComponentBase
+﻿@using System.Diagnostics;
+@inherits LocalComponentBase
+
+@inject UiReasoningState State
 
 @{
     RenderFragment<RenderFragment> simple = c => @<span class="@Classes">@c</span>;
@@ -16,7 +19,7 @@
 
     RenderFragment<RenderFragment> GetWrapper()
     {
-        if (Context is null || !Context.IsInteractive) return simple;
+        if (UiExpression is null) return simple;
 
         return full;
     }
@@ -25,16 +28,13 @@
 <WrapperApplication Wrapper="@GetWrapper()">
     <BzExpressionContent Expression="@Expression" IsInner="@IsInner" />
 
-    @if (Context?.AllowsDerivation == true && UiExpression?.Annotation is UiAnnotation annotation)
+    @if (UiExpression?.Annotation is UiAnnotation annotation)
     {
         <div class="@GetAnnotationClasses(annotation.IsTopOrLeft)">
             <div class="annotation-box">
-                <BzWithResetContext>
-                    <BzChainPart Part="annotation.ChainPart" />
-                </BzWithResetContext>
+                <BzChainPart Part="annotation.ChainPart" />
             </div>
         </div>
-        
     }
     else if (IsChooserOpen)
     {
@@ -50,8 +50,7 @@
     [Parameter]
     public Expression Expression { get; set; } = null!;
 
-    [CascadingParameter]
-    public IExpressionContext? Context { get; set; }
+
 
     [Parameter]
     public Boolean IsInner { get; set; }
@@ -64,6 +63,8 @@
 
     public ChainPart[]? ChainParts { get; set; }
 
+    Int32 wrapperDummy = 0;
+
     String GetAnnotationClasses(Boolean? isTopOrLeft) => ClassNames(
         "annotation",
         "annotation-top".If(isTopOrLeft == true),
@@ -75,11 +76,9 @@
 
     public void OpenChooser()
     {
-        if (Context is null) return;
-
         if (UiExpression is null) return;
 
-        Context.BeginDerivation(UiExpression, CloseChooser, out var suggestions);
+        State.BeginDerivation(UiExpression, CloseChooser, out var suggestions);
 
         ChainParts = suggestions;
     }
@@ -93,7 +92,8 @@
 
     void HandleChoice(ChainPart choice)
     {
-        Context?.SetAnnotation(UiExpression!, choice);
+        // this causes some infinite update:
+        State.SetAnnotation(UiExpression!, choice);
 
         SetUpdateSubscription(UiExpression);
 

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Xml.Serialization;
 using static Ptt.FieldSymbols;
 using static Ptt.RelationSymbols;
 
@@ -13,6 +14,8 @@ public record Expression
     public virtual IEnumerable<Expression> Children => Enumerable.Empty<Expression>();
 
     public virtual Expression Map(Func<Expression, Expression> mapping) => throw new NotImplementedException();
+
+    public virtual Expression MakeClone() => throw new NotImplementedException();
 }
 
 public class DslExpression
@@ -70,6 +73,8 @@ public record AtomExpression(Symbol Symbol) : Expression
     public override Expression Map(Func<Expression, Expression> mapping) => this;
 
     public override String ToString() => $"{Symbol}";
+
+    public override Expression MakeClone() => new AtomExpression(Symbol);
 }
 
 public record UnaryExpression(Symbol Symbol, Expression Op) : Expression
@@ -85,6 +90,8 @@ public record UnaryExpression(Symbol Symbol, Expression Op) : Expression
     }
 
     public override String ToString() => $"{Symbol}({Op})";
+
+    public override Expression MakeClone() => new UnaryExpression(Symbol, Op.MakeClone());
 }
 
 public record BinaryExpression(Symbol Symbol, Expression Lhs, Expression Rhs) : Expression
@@ -102,6 +109,8 @@ public record BinaryExpression(Symbol Symbol, Expression Lhs, Expression Rhs) : 
     }
 
     public override String ToString() => $"({Lhs} {Symbol} {Rhs})";
+
+    public override Expression MakeClone() => new BinaryExpression(Symbol, Lhs.MakeClone(), Rhs.MakeClone());
 }
 
 public record Relation(Symbol Symbol, Expression Lhs, Expression Rhs, Boolean IsReversed = false, Boolean IsNegated = false)
@@ -142,6 +151,21 @@ public static partial class Extensions
 
         return new Relation(symbol, lhs, rhs, isReversed, isNegated);
     }
+
+    public static Expression Host(this Expression expression, Action<Expression> visitor)
+    {
+        visitor(expression);
+
+        foreach (var child in expression.Children)
+        {
+            child.Host(visitor);
+        }
+
+        return expression;
+    }
+
+    public static Expression AssertNonUi(this Expression expression)
+        => expression.Host(e => { if (e.Ui is not null) throw new Exception("Expression is used in UI"); });
 
     public static ChainPart ToChainPart(this Relation relation)
     {

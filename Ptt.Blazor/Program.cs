@@ -11,6 +11,7 @@ serivces.AddServerSideBlazor();
 serivces.AddSingleton<WeatherForecastService>();
 
 serivces.AddScoped<InteractionManager>();
+serivces.AddScoped<UiReasoningState>(sp => sp.GetRequiredService<InteractionManager>().ReasoningState);
 
 var app = builder.Build();
 
