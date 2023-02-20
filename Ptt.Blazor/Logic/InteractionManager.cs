@@ -63,7 +63,7 @@ public class InteractionManager : IDisposable, IComponentNotifier
     public void HandleEscape() => reasoningState.HandleEscape();
 
     [JSInvokable]
-    public void HandleSpace() => reasoningState.HandleSpace();
+    public void HandleSpace() => reasoningState.Cascade(true);
 
     public void Dispose()
     {

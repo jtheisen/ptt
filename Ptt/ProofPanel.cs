@@ -1,4 +1,6 @@
-﻿namespace Ptt;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Ptt;
 
 public class ReasoningChain
 {
@@ -138,9 +140,11 @@ public class UiReasoningState
         {
             rhs = expression;
         }
+
+        notifier.Notify(expression);
     }
 
-    public Boolean BeginDerivation(UiExpression source, Action close, out ChainPart[]? suggestions)
+    public Boolean BeginDerivation(UiExpression source, Action? close, [NotNullWhen(true)] out ChainPart[]? suggestions)
     {
         suggestions = null;
 
@@ -156,7 +160,7 @@ public class UiReasoningState
 
         suggestions = ruleSet.GetSuggestions(source.Expression.MakeClone().AssertNonUi()).ToArray();
 
-        SetCloseChooser(close);
+        if (close is not null) SetCloseChooser(close);
 
         return true;
     }
@@ -203,7 +207,29 @@ public class UiReasoningState
         }
     }
 
-    public void HandleSpace()
+    public void Cascade(Boolean allowTransfer = false)
+    {
+        if (lhs is null && rhs is null) return;
+
+        var existing = (lhs ?? rhs)!;
+
+        if (existing.Parent is UiExpression parent)
+        {
+            if (!BeginDerivation(parent, null, out var suggestions)) return;
+
+            if (suggestions.Length != 1) return;
+
+            var choice = suggestions.Single();
+
+            SetAnnotation(parent, choice);
+        }
+        else if (allowTransfer)
+        {
+            Transfer();
+        }
+    }
+
+    public void Transfer()
     {
         if (rhs is not null) return;
 

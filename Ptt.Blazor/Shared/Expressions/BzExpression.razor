@@ -112,8 +112,14 @@
         // this causes some infinite update:
         State.SetAnnotation(UiExpression!, choice);
 
-        SetUpdateSubscription(UiExpression);
-
         CloseChooser();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (UiExpression is UiExpression ui)
+        {
+            SetUpdateSubscription(ui);
+        }
     }
 }

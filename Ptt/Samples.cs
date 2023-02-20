@@ -69,13 +69,23 @@ public class SampleRuleSet : TestVariables
         ruleSet.AddImplication("equality", new[] { ~x, ~y, ~c }, c + x == c + y, x == y);
     }
 
+    protected void AssertEqual(Expression expected, Expression? actual)
+        => ExpressionComparer.AssertEqual(expected, actual);
+}
+
+public class SampleChain : TestVariables
+{
+    public SampleChain()
+        : base(s => s)
+    {
+    }
+
     public ReasoningChain GetChain()
     {
+        var ruleSet = new SampleRuleSet().ruleSet;
+
         var chain = new ReasoningChain(ruleSet, a * (x + y));
 
         return chain;
     }
-
-    protected void AssertEqual(Expression expected, Expression? actual)
-        => ExpressionComparer.AssertEqual(expected, actual);
 }
